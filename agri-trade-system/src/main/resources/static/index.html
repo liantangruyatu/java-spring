@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>农副产品交易管理系统</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        #app {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #6a9c3f, #3e6b2c);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .nav {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .nav-btn.active {
+            background-color: #2E7D32;
+        }
+
+        .nav-btn:hover {
+            background-color: #45a049;
+        }
+
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+        }
+
+        .btn-danger {
+            background-color: #f44336;
+        }
+
+        .btn-danger:hover {
+            background-color: #da190b;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .product-image {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .product-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .product-price {
+            color: #e74c3c;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .product-stock {
+            color: #777;
+            margin-bottom: 10px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .user-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #f44336;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+        }
+
+        .role-login {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .role-btn {
+            padding: 10px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .role-btn.active {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <div class="header">
+        <h1>农副产品交易管理系统</h1>
+        <p>基于Spring Boot + Vue的现代化农业交易平台</p>
+    </div>
+
+    <div v-if="currentUser" class="user-info">
+        <div>
+            <strong>欢迎, {{ currentUser.realName }} ({{ currentUser.role }})</strong>
+        </div>
+        <div>
+                <span class="cart-icon" @click="showView('cart')" v-if="currentUser.role === 'customer'">
+                    🛒
+                    <span class="cart-count" v-if="cartCount > 0">{{ cartCount }}</span>
+                </span>
+            <button @click="logout" class="btn btn-danger" style="margin-left: 10px;">退出登录</button>
+        </div>
+    </div>
+
+    <div v-if="!currentUser" class="nav">
+        <button @click="showView('login')" class="nav-btn" :class="{active: currentView === 'login'}">登录</button>
+        <button @click="showView('register')" class="nav-btn" :class="{active: currentView === 'register'}">注册</button>
+    </div>
+
+    <div v-if="currentUser" class="nav">
+        <button @click="showView('home')" class="nav-btn" :class="{active: currentView === 'home'}">首页</button>
+        <button v-if="currentUser.role === 'admin'" @click="showView('admin')" class="nav-btn" :class="{active: currentView === 'admin'}">管理员管理</button>
+        <button v-if="currentUser.role === 'merchant'" @click="showView('merchant')" class="nav-btn" :class="{active: currentView === 'merchant'}">商家管理</button>
+        <button v-if="currentUser.role === 'customer'" @click="showView('customer')" class="nav-btn" :class="{active: currentView === 'customer'}">用户中心</button>
+        <button @click="showView('products')" class="nav-btn" :class="{active: currentView === 'products'}">商品浏览</button>
+        <button v-if="currentUser.role === 'customer'" @click="showView('cart')" class="nav-btn" :class="{active: currentView === 'cart'}">购物车</button>
+    </div>
+
+    <!-- 登录页面 -->
+    <div v-if="currentView === 'login'" class="form-container">
+        <h2>用户登录</h2>
+
+        <!-- 角色选择 -->
+        <div class="role-login">
+            <button @click="setLoginRole('customer')" class="role-btn" :class="{active: loginRole === 'customer'}">用户登录</button>
+            <button @click="setLoginRole('merchant')" class="role-btn" :class="{active: loginRole === 'merchant'}">商家登录</button>
+            <button @click="setLoginRole('admin')" class="role-btn" :class="{active: loginRole === 'admin'}">管理员登录</button>
+        </div>
+
+        <div class="form-group">
+            <label>用户名:</label>
+            <input v-model="loginForm.username" type="text" placeholder="请输入用户名">
+        </div>
+        <div class="form-group">
+            <label>密码:</label>
+            <input v-model="loginForm.password" type="password" placeholder="请输入密码">
+        </div>
+        <p v-if="loginRole === 'admin'" style="color: #f44336; font-weight: bold;">管理员登录</p>
+        <p v-if="loginRole === 'merchant'" style="color: #2196F3; font-weight: bold;">商家登录</p>
+        <p v-if="loginRole === 'customer'" style="color: #4CAF50; font-weight: bold;">用户登录</p>
+        <button @click="login" class="btn">登录</button>
+    </div>
+
+    <!-- 注册页面 -->
+    <div v-if="currentView === 'register'" class="form-container">
+        <h2>用户注册</h2>
+        <div class="form-group">
+            <label>用户名:</label>
+            <input v-model="registerForm.username" type="text" placeholder="请输入用户名">
+        </div>
+        <div class="form-group">
+            <label>密码:</label>
+            <input v-model="registerForm.password" type="password" placeholder="请输入密码">
+        </div>
+        <div class="form-group">
+            <label>邮箱:</label>
+            <input v-model="registerForm.email" type="email" placeholder="请输入邮箱">
+        </div>
+        <div class="form-group">
+            <label>真实姓名:</label>
+            <input v-model="registerForm.realName" type="text" placeholder="请输入真实姓名">
+        </div>
+        <div class="form-group">
+            <label>角色:</label>
+            <select v-model="registerForm.role">
+                <option value="customer">普通用户</option>
+                <option value="merchant">商家</option>
+            </select>
+        </div>
+        <button @click="register" class="btn">注册</button>
+    </div>
+
+    <!-- 首页 -->
+    <div v-if="currentView === 'home'" class="form-container">
+        <h2>欢迎来到农副产品交易平台</h2>
+        <p v-if="currentUser.role === 'admin'">作为管理员，您可以管理用户和系统设置。</p>
+        <p v-if="currentUser.role === 'merchant'">作为商家，您可以管理您的商品和订单。</p>
+        <p v-if="currentUser.role === 'customer'">作为用户，您可以浏览和购买商品。</p>
+    </div>
+
+    <!-- 管理员管理页面 -->
+    <div v-if="currentView === 'admin'" class="form-container">
+        <h2>管理员管理</h2>
+        <h3>所有用户</h3>
+        <div v-if="users.length > 0">
+            <div v-for="user in users" :key="user.id" class="product-card">
+                <div><strong>{{ user.realName }}</strong> ({{ user.username }})</div>
+                <div>角色: {{ user.role }}</div>
+                <div>邮箱: {{ user.email }}</div>
+                <div>状态:
+                    <span v-if="user.status === 1" style="color: green;">正常</span>
+                    <span v-else style="color: red;">禁用</span>
+                </div>
+                <button v-if="user.status === 1" @click="updateUserStatus(user.id, 0)" class="btn btn-danger" style="margin-top: 10px;">禁用</button>
+                <button v-else @click="updateUserStatus(user.id, 1)" class="btn" style="margin-top: 10px;">启用</button>
+            </div>
+        </div>
+        <div v-else>暂无用户数据</div>
+    </div>
+
+    <!-- 商家管理页面 -->
+    <div v-if="currentView === 'merchant'" class="form-container">
+        <h2>商家管理</h2>
+        <div class="form-group">
+            <label>商品名称:</label>
+            <input v-model="productForm.name" type="text" placeholder="商品名称">
+        </div>
+        <div class="form-group">
+            <label>商品描述:</label>
+            <input v-model="productForm.description" type="text" placeholder="商品描述">
+        </div>
+        <div class="form-group">
+            <label>价格:</label>
+            <input v-model="productForm.price" type="number" step="0.01" placeholder="价格">
+        </div>
+        <div class="form-group">
+            <label>库存:</label>
+            <input v-model="productForm.stock" type="number" placeholder="库存">
+        </div>
+        <div class="form-group">
+            <label>单位:</label>
+            <input v-model="productForm.unit" type="text" placeholder="单位 (如: 斤, 公斤, 个)">
+        </div>
+        <div class="form-group">
+            <label>分类ID:</label>
+            <input v-model="productForm.categoryId" type="number" placeholder="分类ID">
+        </div>
+        <button @click="createProduct" class="btn">添加商品</button>
+
+        <h3 style="margin-top: 30px;">我的商品</h3>
+        <div v-if="myProducts.length > 0">
+            <div v-for="product in myProducts" :key="product.id" class="product-card">
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-price">¥{{ product.price }}</div>
+                <div class="product-stock">库存: {{ product.stock }} {{ product.unit }}</div>
+                <div>描述: {{ product.description }}</div>
+                <button @click="deleteProduct(product.id)" class="btn btn-danger" style="margin-top: 10px;">删除</button>
+            </div>
+        </div>
+        <div v-else>暂无商品数据</div>
+    </div>
+
+    <!-- 用户中心页面 -->
+    <div v-if="currentView === 'customer'" class="form-container">
+        <h2>用户中心</h2>
+        <h3>我的订单</h3>
+        <div v-if="myOrders.length > 0">
+            <div v-for="order in myOrders" :key="order.id" class="product-card">
+                <div><strong>订单号: {{ order.id }}</strong></div>
+                <div>总金额: ¥{{ order.totalAmount }}</div>
+                <div>状态:
+                    <span v-if="order.status === 1">待付款</span>
+                    <span v-else-if="order.status === 2">待发货</span>
+                    <span v-else-if="order.status === 3">已发货</span>
+                    <span v-else-if="order.status === 4">已完成</span>
+                    <span v-else-if="order.status === 5">已取消</span>
+                </div>
+                <div>收货人: {{ order.receiver }}</div>
+                <div>地址: {{ order.address }}</div>
+                <div>电话: {{ order.phone }}</div>
+            </div>
+        </div>
+        <div v-else>暂无订单数据</div>
+    </div>
+
+    <!-- 购物车页面 -->
+    <div v-if="currentView === 'cart'" class="form-container">
+        <h2>购物车</h2>
+        <div v-if="cartItems.length > 0">
+            <div v-for="item in cartItems" :key="item.id" class="product-card">
+                <div class="product-name">{{ getProductName(item.productId) }}</div>
+                <div class="product-price">单价: ¥{{ getProductPrice(item.productId) }}</div>
+                <div class="product-stock">数量:
+                    <button @click="updateCartItemQuantity(item.id, item.quantity - 1)" class="btn" :disabled="item.quantity <= 1">-</button>
+                    {{ item.quantity }}
+                    <button @click="updateCartItemQuantity(item.id, item.quantity + 1)" class="btn">+</button>
+                </div>
+                <div>小计: ¥{{ (getProductPrice(item.productId) * item.quantity).toFixed(2) }}</div>
+                <button @click="removeFromCart(item.id)" class="btn btn-danger" style="margin-top: 10px;">删除</button>
+            </div>
+            <div style="text-align: right; margin-top: 20px; font-size: 20px; font-weight: bold;">
+                总计: ¥{{ cartTotal.toFixed(2) }}
+                <button @click="createOrderFromCart" class="btn" style="margin-left: 20px;">结算</button>
+            </div>
+        </div>
+        <div v-else>
+            <p>购物车是空的</p>
+        </div>
+    </div>
+
+    <!-- 商品浏览页面 -->
+    <div v-if="currentView === 'products'" class="form-container">
+        <h2>商品浏览</h2>
+        <div class="product-grid">
+            <div v-for="product in products" :key="product.id" class="product-card">
+                <div class="product-name">{{ product.name }}</div>
+                <div class="product-price">¥{{ product.price }}</div>
+                <div class="product-stock">库存: {{ product.stock }} {{ product.unit }}</div>
+                <div>描述: {{ product.description }}</div>
+                <button v-if="currentUser && currentUser.role === 'customer'" @click="addToCart(product)" class="btn" style="margin-top: 10px;">加入购物车</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp, ref, onMounted, computed } = Vue;
+
+    createApp({
+        setup() {
+            const currentView = ref('login');
+            const currentUser = ref(null);
+            const loginRole = ref('customer'); // 默认用户角色
+            const loginForm = ref({
+                username: '',
+                password: ''
+            });
+            const registerForm = ref({
+                username: '',
+                password: '',
+                email: '',
+                realName: '',
+                role: 'customer'
+            });
+            const users = ref([]);
+            const products = ref([]);
+            const myProducts = ref([]);
+            const myOrders = ref([]);
+            const cartItems = ref([]);
+            const cartCount = computed(() => {
+                return cartItems.value.reduce((total, item) => total + item.quantity, 0);
+            });
+            const cartTotal = computed(() => {
+                return cartItems.value.reduce((total, item) => {
+                    const product = products.value.find(p => p.id === item.productId);
+                    return total + (product ? product.price * item.quantity : 0);
+                }, 0);
+            });
+            const productForm = ref({
+                name: '',
+                description: '',
+                price: '',
+                stock: '',
+                unit: '',
+                categoryId: ''
+            });
+
+            const setLoginRole = (role) => {
+                loginRole.value = role;
+                loginForm.value = { username: '', password: '' }; // 清空登录表单
+            };
+
+            const showView = (view) => {
+                currentView.value = view;
+
+                // 根据视图加载相应数据
+                if (view === 'admin' && currentUser.value && currentUser.value.role === 'admin') {
+                    loadAllUsers();
+                } else if (view === 'merchant' && currentUser.value && currentUser.value.role === 'merchant') {
+                    loadMyProducts();
+                } else if (view === 'customer' && currentUser.value && currentUser.value.role === 'customer') {
+                    loadMyOrders();
+                } else if (view === 'products') {
+                    loadAllProducts();
+                } else if (view === 'cart' && currentUser.value && currentUser.value.role === 'customer') {
+                    loadCartItems();
+                }
+            };
+
+            const login = async () => {
+                try {
+                    const response = await axios.post('/api/user/login', {
+                        username: loginForm.value.username,
+                        password: loginForm.value.password
+                    });
+
+                    if (response.data.success) {
+                        currentUser.value = response.data.data;
+
+                        // 验证用户角色是否与登录角色匹配
+                        if (currentUser.value.role !== loginRole.value) {
+                            alert(`您是${currentUser.value.role === 'admin' ? '管理员' : currentUser.value.role === 'merchant' ? '商家' : '用户'}，不能使用${loginRole.value === 'admin' ? '管理员' : loginRole.value === 'merchant' ? '商家' : '用户'}登录`);
+                            currentUser.value = null;
+                            return;
+                        }
+
+                        currentView.value = 'home';
+                        alert('登录成功');
+
+                        // 如果是客户，加载购物车
+                        if (currentUser.value.role === 'customer') {
+                            loadCartItems();
+                        }
+                    } else {
+                        alert(response.data.message || '登录失败');
+                    }
+                } catch (error) {
+                    console.error('登录错误:', error);
+                    alert('登录失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const register = async () => {
+                try {
+                    const response = await axios.post('/api/user/register', registerForm.value);
+
+                    if (response.data.success) {
+                        alert('注册成功');
+                        currentView.value = 'login';
+                    } else {
+                        alert(response.data.message || '注册失败');
+                    }
+                } catch (error) {
+                    console.error('注册错误:', error);
+                    alert('注册失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const logout = () => {
+                currentUser.value = null;
+                currentView.value = 'login';
+                loginForm.value = { username: '', password: '' };
+                cartItems.value = [];
+            };
+
+            const loadAllUsers = async () => {
+                try {
+                    const response = await axios.get('/api/admin/users');
+                    if (response.data.success) {
+                        users.value = response.data.data;
+                    }
+                } catch (error) {
+                    console.error('加载用户失败:', error);
+                }
+            };
+
+            const updateUserStatus = async (userId, status) => {
+                try {
+                    const response = await axios.put('/api/admin/user/status', null, {
+                        params: { userId, status }
+                    });
+
+                    if (response.data.success) {
+                        alert('用户状态更新成功');
+                        loadAllUsers(); // 重新加载用户列表
+                    } else {
+                        alert(response.data.message || '更新失败');
+                    }
+                } catch (error) {
+                    console.error('更新用户状态失败:', error);
+                    alert('更新失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const createProduct = async () => {
+                if (!currentUser.value || currentUser.value.role !== 'merchant') {
+                    alert('只有商家可以添加商品');
+                    return;
+                }
+
+                try {
+                    const productData = {
+                        ...productForm.value,
+                        merchantId: currentUser.value.id,
+                        price: parseFloat(productForm.value.price),
+                        stock: parseInt(productForm.value.stock),
+                        categoryId: parseInt(productForm.value.categoryId)
+                    };
+
+                    const response = await axios.post('/api/product', productData);
+
+                    if (response.data.success) {
+                        alert('商品添加成功');
+                        productForm.value = {
+                            name: '',
+                            description: '',
+                            price: '',
+                            stock: '',
+                            unit: '',
+                            categoryId: ''
+                        };
+                        loadMyProducts(); // 重新加载我的商品
+                    } else {
+                        alert(response.data.message || '添加失败');
+                    }
+                } catch (error) {
+                    console.error('添加商品失败:', error);
+                    alert('添加失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const loadMyProducts = async () => {
+                if (!currentUser.value || currentUser.value.role !== 'merchant') {
+                    return;
+                }
+
+                try {
+                    const response = await axios.get(`/api/product/merchant/${currentUser.value.id}`);
+                    if (response.data.success) {
+                        myProducts.value = response.data.data;
+                    }
+                } catch (error) {
+                    console.error('加载我的商品失败:', error);
+                }
+            };
+
+            const deleteProduct = async (productId) => {
+                try {
+                    const response = await axios.delete(`/api/product/${productId}`);
+
+                    if (response.data.success) {
+                        alert('商品删除成功');
+                        loadMyProducts(); // 重新加载我的商品
+                    } else {
+                        alert(response.data.message || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('删除商品失败:', error);
+                    alert('删除失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const loadMyOrders = async () => {
+                if (!currentUser.value || currentUser.value.role !== 'customer') {
+                    return;
+                }
+
+                try {
+                    const response = await axios.get(`/api/order/customer/${currentUser.value.id}`);
+                    if (response.data.success) {
+                        myOrders.value = response.data.data;
+                    }
+                } catch (error) {
+                    console.error('加载我的订单失败:', error);
+                }
+            };
+
+            const loadAllProducts = async () => {
+                try {
+                    const response = await axios.get('/api/product/onsale');
+                    if (response.data.success) {
+                        products.value = response.data.data;
+                    }
+                } catch (error) {
+                    console.error('加载商品失败:', error);
+                    // 使用模拟数据以便演示
+                    products.value = [
+                        { id: 1, name: '有机菠菜', price: 12.80, stock: 100, unit: '斤', description: '新鲜有机菠菜' },
+                        { id: 2, name: '农家胡萝卜', price: 8.50, stock: 200, unit: '斤', description: '农家新鲜胡萝卜' },
+                        { id: 3, name: '有机橙子', price: 18.50, stock: 150, unit: '斤', description: '新鲜有机橙子' }
+                    ];
+                }
+            };
+
+            const addToCart = async (product) => {
+                if (!currentUser.value) {
+                    alert('请先登录');
+                    return;
+                }
+
+                if (currentUser.value.role !== 'customer') {
+                    alert('只有普通用户可以购买商品');
+                    return;
+                }
+
+                try {
+                    const cartItem = {
+                        userId: currentUser.value.id,
+                        productId: product.id,
+                        quantity: 1
+                    };
+
+                    const response = await axios.post('/api/cart', cartItem);
+
+                    if (response.data.success) {
+                        alert('已添加到购物车');
+                        loadCartItems(); // 重新加载购物车
+                    } else {
+                        alert(response.data.message || '添加失败');
+                    }
+                } catch (error) {
+                    console.error('添加到购物车失败:', error);
+                    alert('添加失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const loadCartItems = async () => {
+                if (!currentUser.value || currentUser.value.role !== 'customer') {
+                    return;
+                }
+
+                try {
+                    const response = await axios.get(`/api/cart/user/${currentUser.value.id}`);
+                    if (response.data.success) {
+                        cartItems.value = response.data.data;
+                    }
+                } catch (error) {
+                    console.error('加载购物车失败:', error);
+                }
+            };
+
+            const updateCartItemQuantity = async (itemId, newQuantity) => {
+                if (newQuantity < 1) {
+                    newQuantity = 1; // 确保数量至少为1
+                }
+
+                try {
+                    const response = await axios.put(`/api/cart/${itemId}`, null, {
+                        params: { quantity: newQuantity }
+                    });
+
+                    if (response.data.success) {
+                        loadCartItems(); // 重新加载购物车
+                    } else {
+                        alert(response.data.message || '更新失败');
+                    }
+                } catch (error) {
+                    console.error('更新购物车失败:', error);
+                    alert('更新失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const removeFromCart = async (itemId) => {
+                try {
+                    const response = await axios.delete(`/api/cart/${itemId}`);
+
+                    if (response.data.success) {
+                        alert('已从购物车删除');
+                        loadCartItems(); // 重新加载购物车
+                    } else {
+                        alert(response.data.message || '删除失败');
+                    }
+                } catch (error) {
+                    console.error('从购物车删除失败:', error);
+                    alert('删除失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            const getProductName = (productId) => {
+                const product = products.value.find(p => p.id === productId);
+                return product ? product.name : '未知商品';
+            };
+
+            const getProductPrice = (productId) => {
+                const product = products.value.find(p => p.id === productId);
+                return product ? product.price : 0;
+            };
+
+            const createOrderFromCart = async () => {
+                if (cartItems.value.length === 0) {
+                    alert('购物车是空的');
+                    return;
+                }
+
+                // 这里需要用户输入收货信息
+                const address = prompt('请输入收货地址:');
+                if (!address) return;
+
+                const phone = prompt('请输入联系电话:');
+                if (!phone) return;
+
+                const receiver = prompt('请输入收货人:');
+                if (!receiver) return;
+
+                try {
+                    // 准备订单数据
+                    const productIds = cartItems.value.map(item => item.productId);
+                    const quantities = cartItems.value.map(item => item.quantity);
+
+                    const response = await axios.post('/api/order', {
+                        productIds: productIds,
+                        quantities: quantities
+                    }, {
+                        params: {
+                            customerId: currentUser.value.id,
+                            merchantId: 1, // 这里应该根据商品来确定商家ID，简化处理
+                            address: address,
+                            phone: phone,
+                            receiver: receiver
+                        }
+                    });
+
+                    if (response.data.success) {
+                        alert('订单创建成功');
+                        await axios.delete(`/api/cart/user/${currentUser.value.id}`); // 清空购物车
+                        loadCartItems(); // 重新加载购物车
+                        showView('customer'); // 跳转到用户中心查看订单
+                    } else {
+                        alert(response.data.message || '订单创建失败');
+                    }
+                } catch (error) {
+                    console.error('创建订单失败:', error);
+                    alert('订单创建失败: ' + (error.response?.data?.message || error.message));
+                }
+            };
+
+            // 页面加载时获取商品数据
+            onMounted(() => {
+                loadAllProducts();
+            });
+
+            return {
+                currentView,
+                currentUser,
+                loginRole,
+                loginForm,
+                registerForm,
+                users,
+                products,
+                myProducts,
+                myOrders,
+                cartItems,
+                cartCount,
+                cartTotal,
+                productForm,
+                setLoginRole,
+                showView,
+                login,
+                register,
+                logout,
+                loadAllUsers,
+                updateUserStatus,
+                createProduct,
+                loadMyProducts,
+                deleteProduct,
+                loadMyOrders,
+                loadAllProducts,
+                addToCart,
+                loadCartItems,
+                updateCartItemQuantity,
+                removeFromCart,
+                getProductName,
+                getProductPrice,
+                createOrderFromCart
+            };
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="nuc.edu.cn.bookmanager.mapper.OrderItemMapper">
+    
+    <resultMap id="OrderItemDTOResultMap" type="nuc.edu.cn.bookmanager.dto.OrderItemDTO">
+        <id column="item_id" property="itemId"/>
+        <result column="order_id" property="orderId"/>
+        <result column="book_id" property="bookId"/>
+        <result column="book_name" property="bookName"/>
+        <result column="quantity" property="quantity"/>
+        <result column="unit_price" property="unitPrice"/>
+        <result column="discount" property="discount"/>
+        <result column="subtotal" property="subtotal"/>
+    </resultMap>
+    
+    <select id="selectItemsByOrderId" resultMap="OrderItemDTOResultMap">
+        SELECT i.*, b.book_name
+        FROM t_order_item i
+        LEFT JOIN t_book b ON i.book_id = b.book_id
+        WHERE i.order_id = #{orderId}
+    </select>
+</mapper>
+

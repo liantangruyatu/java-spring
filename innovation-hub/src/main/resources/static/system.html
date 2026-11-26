@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创新创业项目申报管理系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.7.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #1976D2;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-tab {
+            flex: 1;
+            min-width: 150px;
+            padding: 15px 20px;
+            background: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .nav-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+        
+        .nav-tab.active {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+        
+        .content-panel {
+            display: none;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .content-panel.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            margin-right: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(33, 150, 243, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .search-box input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        table thead {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+        }
+        
+        table th,
+        table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        
+        table tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .actions button {
+            padding: 6px 12px;
+            font-size: 14px;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+        }
+        
+        .modal.active {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .modal-header h2 {
+            color: #1976D2;
+        }
+        
+        .close-modal {
+            float: right;
+            font-size: 28px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .close-modal:hover {
+            color: #333;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .message.active {
+            display: block;
+        }
+        
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="header">
+            <h1>🚀 创新创业项目申报管理系统</h1>
+            <p>Innovation and Entrepreneurship Project Management System</p>
+            <div style="margin-top: 15px; display: flex; justify-content: center; align-items: center; gap: 20px;">
+                <span style="color: #1976D2; font-weight: bold;">
+                    {{ currentUser ? (userType === 'teacher' ? '教师：' : '学生：') + currentUser.name : '' }}
+                </span>
+                <button class="btn btn-secondary" style="padding: 8px 20px;" @click="logout">退出登录</button>
+            </div>
+        </div>
+        
+        <div class="nav-tabs">
+            <button class="nav-tab" :class="{active: activeTab === 'teachers'}" @click="activeTab = 'teachers'; loadTeachers()">教师管理</button>
+            <button class="nav-tab" :class="{active: activeTab === 'students'}" @click="activeTab = 'students'; loadStudents()">学生管理</button>
+            <button class="nav-tab" :class="{active: activeTab === 'topics'}" @click="activeTab = 'topics'; loadTopics()">题目发布</button>
+            <button class="nav-tab" :class="{active: activeTab === 'projects'}" @click="activeTab = 'projects'; loadProjects()">项目管理</button>
+            <button class="nav-tab" :class="{active: activeTab === 'selections'}" @click="activeTab = 'selections'; loadSelections()">选题管理</button>
+            <button class="nav-tab" :class="{active: activeTab === 'query'}" @click="activeTab = 'query'; initQuery()">查询统计</button>
+        </div>
+        
+        <!-- 教师管理 -->
+        <div v-show="activeTab === 'teachers'" class="content-panel active">
+            <h2>教师信息管理</h2>
+            <div v-if="message.text" :class="['message', 'active', message.type]">
+                {{ message.text }}
+            </div>
+            <button class="btn btn-primary" @click="openTeacherModal()">添加教师</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>学院</th>
+                        <th>职称</th>
+                        <th>电话</th>
+                        <th>邮箱</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="teacher in teachers" :key="teacher.teacherId">
+                        <td>{{ teacher.teacherId }}</td>
+                        <td>{{ teacher.name }}</td>
+                        <td>{{ teacher.college }}</td>
+                        <td>{{ teacher.title }}</td>
+                        <td>{{ teacher.phone }}</td>
+                        <td>{{ teacher.email }}</td>
+                        <td class="actions">
+                            <button class="btn btn-secondary" @click="editTeacher(teacher)">编辑</button>
+                            <button class="btn btn-danger" @click="deleteTeacher(teacher.teacherId)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 学生管理 -->
+        <div v-show="activeTab === 'students'" class="content-panel active">
+            <h2>学生信息管理</h2>
+            <div v-if="message.text" :class="['message', 'active', message.type]">
+                {{ message.text }}
+            </div>
+            <button class="btn btn-primary" @click="openStudentModal()">添加学生</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>姓名</th>
+                        <th>专业</th>
+                        <th>班级</th>
+                        <th>电话</th>
+                        <th>邮箱</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="student in students" :key="student.studentId">
+                        <td>{{ student.studentId }}</td>
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.major }}</td>
+                        <td>{{ student.className }}</td>
+                        <td>{{ student.phone }}</td>
+                        <td>{{ student.email }}</td>
+                        <td class="actions">
+                            <button class="btn btn-secondary" @click="editStudent(student)">编辑</button>
+                            <button class="btn btn-danger" @click="deleteStudent(student.studentId)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 题目发布 -->
+        <div v-show="activeTab === 'topics'" class="content-panel active">
+            <h2>题目发布管理</h2>
+            <div v-if="message.text" :class="['message', 'active', message.type]">
+                {{ message.text }}
+            </div>
+            <button class="btn btn-primary" @click="openTopicModal()">发布题目</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>题目名称</th>
+                        <th>描述</th>
+                        <th>指导教师</th>
+                        <th>发布时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="topic in topics" :key="topic.topicId">
+                        <td>{{ topic.topicId }}</td>
+                        <td>{{ topic.title }}</td>
+                        <td>{{ topic.description }}</td>
+                        <td>{{ topic.teacherName }}</td>
+                        <td>{{ formatDate(topic.createdAt) }}</td>
+                        <td class="actions">
+                            <button class="btn btn-secondary" @click="editTopic(topic)">编辑</button>
+                            <button class="btn btn-danger" @click="deleteTopic(topic.topicId)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 项目管理 -->
+        <div v-show="activeTab === 'projects'" class="content-panel active">
+            <h2>项目申报管理</h2>
+            <div v-if="message.text" :class="['message', 'active', message.type]">
+                {{ message.text }}
+            </div>
+            <button class="btn btn-primary" @click="openProjectModal()">提交项目</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>项目名称</th>
+                        <th>描述</th>
+                        <th>指导教师</th>
+                        <th>申报学生</th>
+                        <th>状态</th>
+                        <th>创建时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="project in projects" :key="project.projectId">
+                        <td>{{ project.projectId }}</td>
+                        <td>{{ project.projectName }}</td>
+                        <td>{{ project.description }}</td>
+                        <td>{{ project.teacherName }}</td>
+                        <td>{{ project.studentName }}</td>
+                        <td>{{ project.status }}</td>
+                        <td>{{ formatDate(project.createdAt) }}</td>
+                        <td class="actions">
+                            <button class="btn btn-secondary" @click="editProject(project)">编辑</button>
+                            <button class="btn btn-danger" @click="deleteProject(project.projectId)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 选题管理 -->
+        <div v-show="activeTab === 'selections'" class="content-panel active">
+            <h2>学生选题管理</h2>
+            <div v-if="message.text" :class="['message', 'active', message.type]">
+                {{ message.text }}
+            </div>
+            <button class="btn btn-primary" @click="openSelectionModal()">选择题目</button>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>学生</th>
+                        <th>选题</th>
+                        <th>指导教师</th>
+                        <th>选题时间</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="selection in selections" :key="selection.selectionId">
+                        <td>{{ selection.selectionId }}</td>
+                        <td>{{ selection.studentName }}</td>
+                        <td>{{ selection.topicTitle }}</td>
+                        <td>{{ selection.teacherName }}</td>
+                        <td>{{ formatDate(selection.selectedAt) }}</td>
+                        <td>{{ selection.status }}</td>
+                        <td class="actions">
+                            <button class="btn btn-secondary" @click="editSelection(selection)">编辑</button>
+                            <button class="btn btn-danger" @click="deleteSelection(selection.selectionId)">删除</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 查询统计 -->
+        <div v-show="activeTab === 'query'" class="content-panel active">
+            <h2>查询统计功能</h2>
+            <div class="grid-2">
+                <div>
+                    <h3>按项目名称查询</h3>
+                    <div class="search-box">
+                        <input type="text" v-model="queryProjectName" placeholder="输入项目名称">
+                        <button class="btn btn-primary" @click="queryByProjectName()">查询</button>
+                    </div>
+                </div>
+                <div>
+                    <h3>按指导教师查询</h3>
+                    <div class="search-box">
+                        <select v-model="queryTeacherId">
+                            <option value="">选择教师</option>
+                            <option v-for="teacher in teachers" :key="teacher.teacherId" :value="teacher.teacherId">
+                                {{ teacher.name }}
+                            </option>
+                        </select>
+                        <button class="btn btn-primary" @click="queryByTeacher()">查询</button>
+                    </div>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>项目ID</th>
+                        <th>项目名称</th>
+                        <th>描述</th>
+                        <th>指导教师</th>
+                        <th>申报学生</th>
+                        <th>状态</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="project in queryResults" :key="project.projectId">
+                        <td>{{ project.projectId }}</td>
+                        <td>{{ project.projectName }}</td>
+                        <td>{{ project.description }}</td>
+                        <td>{{ project.teacherName }}</td>
+                        <td>{{ project.studentName }}</td>
+                        <td>{{ project.status }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 教师模态框 -->
+        <div v-if="showTeacherModal" class="modal active" @click.self="showTeacherModal = false">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close-modal" @click="showTeacherModal = false">&times;</span>
+                    <h2>{{ teacherForm.teacherId ? '编辑教师' : '添加教师' }}</h2>
+                </div>
+                <form @submit.prevent="saveTeacher">
+                    <div class="form-group">
+                        <label>姓名 *</label>
+                        <input type="text" v-model="teacherForm.name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>学院 *</label>
+                        <input type="text" v-model="teacherForm.college" required>
+                    </div>
+                    <div class="form-group">
+                        <label>职称</label>
+                        <input type="text" v-model="teacherForm.title">
+                    </div>
+                    <div class="form-group">
+                        <label>电话</label>
+                        <input type="text" v-model="teacherForm.phone">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" v-model="teacherForm.email">
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" @click="showTeacherModal = false">取消</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 学生模态框 -->
+        <div v-if="showStudentModal" class="modal active" @click.self="showStudentModal = false">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close-modal" @click="showStudentModal = false">&times;</span>
+                    <h2>{{ studentForm.studentId ? '编辑学生' : '添加学生' }}</h2>
+                </div>
+                <form @submit.prevent="saveStudent">
+                    <div class="form-group">
+                        <label>姓名 *</label>
+                        <input type="text" v-model="studentForm.name" required>
+                    </div>
+                    <div class="form-group">
+                        <label>专业 *</label>
+                        <input type="text" v-model="studentForm.major" required>
+                    </div>
+                    <div class="form-group">
+                        <label>班级</label>
+                        <input type="text" v-model="studentForm.className">
+                    </div>
+                    <div class="form-group">
+                        <label>电话</label>
+                        <input type="text" v-model="studentForm.phone">
+                    </div>
+                    <div class="form-group">
+                        <label>邮箱</label>
+                        <input type="email" v-model="studentForm.email">
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" @click="showStudentModal = false">取消</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 题目模态框 -->
+        <div v-if="showTopicModal" class="modal active" @click.self="showTopicModal = false">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close-modal" @click="showTopicModal = false">&times;</span>
+                    <h2>{{ topicForm.topicId ? '编辑题目' : '发布题目' }}</h2>
+                </div>
+                <form @submit.prevent="saveTopic">
+                    <div class="form-group">
+                        <label>题目名称 *</label>
+                        <input type="text" v-model="topicForm.title" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea v-model="topicForm.description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>指导教师 *</label>
+                        <select v-model="topicForm.teacherId" required>
+                            <option value="">选择教师</option>
+                            <option v-for="teacher in teachers" :key="teacher.teacherId" :value="teacher.teacherId">
+                                {{ teacher.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" @click="showTopicModal = false">取消</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 项目模态框 -->
+        <div v-if="showProjectModal" class="modal active" @click.self="showProjectModal = false">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close-modal" @click="showProjectModal = false">&times;</span>
+                    <h2>{{ projectForm.projectId ? '编辑项目' : '提交项目' }}</h2>
+                </div>
+                <form @submit.prevent="saveProject">
+                    <div class="form-group">
+                        <label>项目名称 *</label>
+                        <input type="text" v-model="projectForm.projectName" required>
+                    </div>
+                    <div class="form-group">
+                        <label>描述</label>
+                        <textarea v-model="projectForm.description"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>指导教师</label>
+                        <select v-model="projectForm.teacherId">
+                            <option value="">选择教师（可选）</option>
+                            <option v-for="teacher in teachers" :key="teacher.teacherId" :value="teacher.teacherId">
+                                {{ teacher.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>申报学生</label>
+                        <select v-model="projectForm.studentId">
+                            <option value="">选择学生（可选）</option>
+                            <option v-for="student in students" :key="student.studentId" :value="student.studentId">
+                                {{ student.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select v-model="projectForm.status">
+                            <option value="待审核">待审核</option>
+                            <option value="审核中">审核中</option>
+                            <option value="已通过">已通过</option>
+                            <option value="已驳回">已驳回</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" @click="showProjectModal = false">取消</button>
+                </form>
+            </div>
+        </div>
+        
+        <!-- 选题模态框 -->
+        <div v-if="showSelectionModal" class="modal active" @click.self="showSelectionModal = false">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <span class="close-modal" @click="showSelectionModal = false">&times;</span>
+                    <h2>{{ selectionForm.selectionId ? '编辑选题' : '选择题目' }}</h2>
+                </div>
+                <form @submit.prevent="saveSelection">
+                    <div class="form-group">
+                        <label>学生 *</label>
+                        <select v-model="selectionForm.studentId" required>
+                            <option value="">选择学生</option>
+                            <option v-for="student in students" :key="student.studentId" :value="student.studentId">
+                                {{ student.name }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>选题 *</label>
+                        <select v-model="selectionForm.topicId" required>
+                            <option value="">选择题目</option>
+                            <option v-for="topic in topics" :key="topic.topicId" :value="topic.topicId">
+                                {{ topic.title }} - {{ topic.teacherName }}
+                            </option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>状态</label>
+                        <select v-model="selectionForm.status">
+                            <option value="待审核">待审核</option>
+                            <option value="已通过">已通过</option>
+                            <option value="已驳回">已驳回</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">保存</button>
+                    <button type="button" class="btn btn-secondary" @click="showSelectionModal = false">取消</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                activeTab: 'teachers',
+                message: { text: '', type: '' },
+                
+                // 登录信息
+                currentUser: null,
+                userType: '',
+                
+                // 数据列表
+                teachers: [],
+                students: [],
+                topics: [],
+                projects: [],
+                selections: [],
+                queryResults: [],
+                
+                // 模态框显示状态
+                showTeacherModal: false,
+                showStudentModal: false,
+                showTopicModal: false,
+                showProjectModal: false,
+                showSelectionModal: false,
+                
+                // 表单数据
+                teacherForm: {},
+                studentForm: {},
+                topicForm: {},
+                projectForm: { status: '待审核' },
+                selectionForm: { status: '待审核' },
+                
+                // 查询条件
+                queryProjectName: '',
+                queryTeacherId: ''
+            },
+            mounted() {
+                // 检查登录状态
+                this.checkLogin();
+                this.loadTeachers();
+            },
+            methods: {
+                // 检查登录状态
+                checkLogin() {
+                    const userInfo = localStorage.getItem('userInfo');
+                    if (!userInfo) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    const data = JSON.parse(userInfo);
+                    this.currentUser = data.user;
+                    this.userType = data.userType;
+                },
+                
+                // 退出登录
+                logout() {
+                    if (confirm('确定要退出登录吗？')) {
+                        localStorage.removeItem('userInfo');
+                        window.location.href = '/login.html';
+                    }
+                },
+                // 显示消息
+                showMessage(text, type) {
+                    this.message = { text, type };
+                    setTimeout(() => {
+                        this.message = { text: '', type: '' };
+                    }, 3000);
+                },
+                
+                // 日期格式化
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    return new Date(dateStr).toLocaleString('zh-CN');
+                },
+                
+                // ========== 教师管理 ==========
+                loadTeachers() {
+                    axios.get('/api/teachers')
+                        .then(res => {
+                            if (res.data.success) {
+                                this.teachers = res.data.data;
+                            }
+                        })
+                        .catch(err => console.error(err));
+                },
+                
+                openTeacherModal() {
+                    this.teacherForm = {};
+                    this.showTeacherModal = true;
+                },
+                
+                editTeacher(teacher) {
+                    this.teacherForm = { ...teacher };
+                    this.showTeacherModal = true;
+                },
+                
+                saveTeacher() {
+                    const url = this.teacherForm.teacherId 
+                        ? `/api/teachers/${this.teacherForm.teacherId}` 
+                        : '/api/teachers';
+                    const method = this.teacherForm.teacherId ? 'put' : 'post';
+                    
+                    axios[method](url, this.teacherForm)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.showTeacherModal = false;
+                                this.loadTeachers();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('操作失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                deleteTeacher(id) {
+                    if (!confirm('确定要删除该教师吗？')) return;
+                    
+                    axios.delete(`/api/teachers/${id}`)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.loadTeachers();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('删除失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                // ========== 学生管理 ==========
+                loadStudents() {
+                    axios.get('/api/students')
+                        .then(res => {
+                            if (res.data.success) {
+                                this.students = res.data.data;
+                            }
+                        })
+                        .catch(err => console.error(err));
+                },
+                
+                openStudentModal() {
+                    this.studentForm = {};
+                    this.showStudentModal = true;
+                },
+                
+                editStudent(student) {
+                    this.studentForm = { ...student };
+                    this.showStudentModal = true;
+                },
+                
+                saveStudent() {
+                    const url = this.studentForm.studentId 
+                        ? `/api/students/${this.studentForm.studentId}` 
+                        : '/api/students';
+                    const method = this.studentForm.studentId ? 'put' : 'post';
+                    
+                    axios[method](url, this.studentForm)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.showStudentModal = false;
+                                this.loadStudents();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('操作失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                deleteStudent(id) {
+                    if (!confirm('确定要删除该学生吗？')) return;
+                    
+                    axios.delete(`/api/students/${id}`)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.loadStudents();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('删除失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                // ========== 题目管理 ==========
+                loadTopics() {
+                    if (this.teachers.length === 0) this.loadTeachers();
+                    
+                    axios.get('/api/topics')
+                        .then(res => {
+                            if (res.data.success) {
+                                this.topics = res.data.data;
+                            }
+                        })
+                        .catch(err => console.error(err));
+                },
+                
+                openTopicModal() {
+                    this.topicForm = {};
+                    this.showTopicModal = true;
+                },
+                
+                editTopic(topic) {
+                    this.topicForm = { ...topic };
+                    this.showTopicModal = true;
+                },
+                
+                saveTopic() {
+                    const url = this.topicForm.topicId 
+                        ? `/api/topics/${this.topicForm.topicId}` 
+                        : '/api/topics';
+                    const method = this.topicForm.topicId ? 'put' : 'post';
+                    
+                    axios[method](url, this.topicForm)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.showTopicModal = false;
+                                this.loadTopics();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('操作失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                deleteTopic(id) {
+                    if (!confirm('确定要删除该题目吗？')) return;
+                    
+                    axios.delete(`/api/topics/${id}`)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.loadTopics();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('删除失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                // ========== 项目管理 ==========
+                loadProjects() {
+                    if (this.teachers.length === 0) this.loadTeachers();
+                    if (this.students.length === 0) this.loadStudents();
+                    
+                    axios.get('/api/projects')
+                        .then(res => {
+                            if (res.data.success) {
+                                this.projects = res.data.data;
+                            }
+                        })
+                        .catch(err => console.error(err));
+                },
+                
+                openProjectModal() {
+                    this.projectForm = { status: '待审核' };
+                    this.showProjectModal = true;
+                },
+                
+                editProject(project) {
+                    this.projectForm = { ...project };
+                    this.showProjectModal = true;
+                },
+                
+                saveProject() {
+                    const url = this.projectForm.projectId 
+                        ? `/api/projects/${this.projectForm.projectId}` 
+                        : '/api/projects';
+                    const method = this.projectForm.projectId ? 'put' : 'post';
+                    
+                    axios[method](url, this.projectForm)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.showProjectModal = false;
+                                this.loadProjects();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('操作失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                deleteProject(id) {
+                    if (!confirm('确定要删除该项目吗？')) return;
+                    
+                    axios.delete(`/api/projects/${id}`)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.loadProjects();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('删除失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                // ========== 选题管理 ==========
+                loadSelections() {
+                    if (this.students.length === 0) this.loadStudents();
+                    if (this.topics.length === 0) this.loadTopics();
+                    
+                    axios.get('/api/selections')
+                        .then(res => {
+                            if (res.data.success) {
+                                this.selections = res.data.data;
+                            }
+                        })
+                        .catch(err => console.error(err));
+                },
+                
+                openSelectionModal() {
+                    this.selectionForm = { status: '待审核' };
+                    this.showSelectionModal = true;
+                },
+                
+                editSelection(selection) {
+                    this.selectionForm = { ...selection };
+                    this.showSelectionModal = true;
+                },
+                
+                saveSelection() {
+                    const url = this.selectionForm.selectionId 
+                        ? `/api/selections/${this.selectionForm.selectionId}` 
+                        : '/api/selections';
+                    const method = this.selectionForm.selectionId ? 'put' : 'post';
+                    
+                    axios[method](url, this.selectionForm)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.showSelectionModal = false;
+                                this.loadSelections();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('操作失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                deleteSelection(id) {
+                    if (!confirm('确定要删除该选题记录吗？')) return;
+                    
+                    axios.delete(`/api/selections/${id}`)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.showMessage(res.data.message, 'success');
+                                this.loadSelections();
+                            } else {
+                                this.showMessage(res.data.message, 'error');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('删除失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                // ========== 查询统计 ==========
+                initQuery() {
+                    if (this.teachers.length === 0) this.loadTeachers();
+                },
+                
+                queryByProjectName() {
+                    if (!this.queryProjectName) {
+                        this.showMessage('请输入项目名称', 'error');
+                        return;
+                    }
+                    
+                    axios.get(`/api/projects/search/name?projectName=${this.queryProjectName}`)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.queryResults = res.data.data;
+                                this.showMessage(`找到 ${res.data.data.length} 条结果`, 'success');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('查询失败', 'error');
+                            console.error(err);
+                        });
+                },
+                
+                queryByTeacher() {
+                    if (!this.queryTeacherId) {
+                        this.showMessage('请选择教师', 'error');
+                        return;
+                    }
+                    
+                    axios.get(`/api/projects/search/teacher/${this.queryTeacherId}`)
+                        .then(res => {
+                            if (res.data.success) {
+                                this.queryResults = res.data.data;
+                                this.showMessage(`找到 ${res.data.data.length} 条结果`, 'success');
+                            }
+                        })
+                        .catch(err => {
+                            this.showMessage('查询失败', 'error');
+                            console.error(err);
+                        });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

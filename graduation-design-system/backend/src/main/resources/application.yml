@@ -1,0 +1,48 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+spring:
+  application:
+    name: graduation-design-system
+  
+  datasource:
+    url: jdbc:mysql://localhost:3306/graduation_design_system?useUnicode=true&characterEncoding=utf-8&useSSL=false
+    username: root
+    password: YOUR_DB_PASSWORD
+    driver-class-name: com.mysql.jdbc.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  
+  mvc:
+    throw-exception-if-no-handler-found: true
+    static-path-pattern: /static/**
+  
+  web:
+    resources:
+      static-locations: classpath:/static/
+
+mybatis-plus:
+  mapper-locations: classpath:/mapper/*.xml
+  type-aliases-package: com.graduation.entity
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    root: INFO
+    com.graduation: DEBUG
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
